@@ -196,4 +196,50 @@ osascript -e 'tell application "System Events" to tell process "<AppName>" to ke
 - Pixel positions from AX tree dumps (AXPosition) ARE reliable — use those when needed.
 - For Java Swing apps: elements have no AXTitle. Discover by dumping the tree, then use index or position.
 - Always `app.activate()` before interacting.
-- If a workflow is new and repeatable, offer to save it to the context.
+
+## What to save and when
+
+### Save to local cache (~/.dobey/contexts/) — immediately, always
+Save as soon as you discover anything useful about the app:
+- App AX name (exactly as seen by `list_menus`)
+- Menu structure
+- AX quirks (e.g. "Java Swing — no AXTitle on elements")
+- Any field/button indices you discovered, even if not yet verified
+
+Use: `python3 ~/.dobey/appcontext.py save "<AppName>"`
+
+### Save to GitHub (apps/<AppName>.json) — only after confirmation
+Only push a workflow to GitHub **after you have verified it worked** — i.e. the screenshot after the action shows the expected result (dialog closed, file created, window title changed, etc.).
+
+**Save to GitHub when:**
+- A workflow completed successfully AND it was non-obvious (required AX tree exploration, index discovery, AppleScript workaround, or multiple attempts to figure out)
+- The workflow is repeatable and app-agnostic enough to be useful to anyone using that app
+
+**Do NOT save to GitHub when:**
+- The step failed or you're mid-discovery
+- It's a one-off action specific to the user's data (e.g. "type John's name into this field")
+- The workflow is trivial (e.g. File > Save works the same as every other app)
+- AXPosition coordinates that depend on window size or screen resolution — save AX indices instead
+
+### What to record in a workflow
+Always record:
+- The exact sequence of commands that worked
+- AX element indices (sorted by y,x) for buttons with no AXTitle
+- Field indices for apps where fields have no AXTitle/AXDescription
+- Any typing method quirk (e.g. "must use AppleScript, not pyautogui.typewrite")
+- Verification step (how you confirmed it worked)
+
+Never record:
+- Pixel coordinates that depend on window position
+- Steps that failed along the way
+- App version-specific UI that may change (flag with `"verified": "YYYY-MM-DD"` so it can be re-checked)
+
+### After a successful new workflow
+1. Update local cache with the new workflow entry
+2. Say: *"That worked. Want me to save this workflow to GitHub so future sessions skip the discovery?"*
+3. If yes: update `apps/<AppName>.json` in the myskills repo and push
+
+### For brand new apps (not in local cache or GitHub)
+After successfully completing the user's first request:
+1. Save what you learned to local cache immediately
+2. Offer: *"I've figured out [AppName]'s AX structure. Want me to add it to the public library so it's available on any machine?"*
