@@ -13,7 +13,13 @@ Use the **macOS Accessibility API** (via `~/.dobey/axcontrol.py`) for all app co
 
 ## Step 1 — Take a screenshot and identify the app
 
+**Always use window-specific capture** — this works even when the app is hidden behind other windows:
+
 ```bash
+# Preferred: capture by window ID (app can be behind other windows)
+python3 ~/.dobey/wincap.py capture "<AppName>" /tmp/dobeypilot.png
+
+# Fallback: full-screen capture (only if wincap fails)
 screencapture -x /tmp/dobeypilot.png
 ```
 
@@ -187,7 +193,10 @@ osascript -e 'tell application "System Events" to tell process "<AppName>" to ke
 ```
 
 ## After each action
-1. Take a fresh screenshot to verify: `screencapture -x /tmp/dobeypilot.png`
+1. Take a fresh screenshot to verify:
+   ```bash
+   python3 ~/.dobey/wincap.py capture "<AppName>" /tmp/dobeypilot.png
+   ```
 2. Read it and report what changed.
 3. Ask: *"Done — what's next?"*
 
@@ -243,3 +252,47 @@ Never record:
 After successfully completing the user's first request:
 1. Save what you learned to local cache immediately
 2. Offer: *"I've figured out [AppName]'s AX structure. Want me to add it to the public library so it's available on any machine?"*
+
+---
+
+## Session persistence (always do this)
+
+### Save session state to GitHub
+At the end of every session, or whenever you get stuck, save what happened:
+
+```bash
+cat <<'EOF' | python3 ~/.dobey/save_session.py save "<AppName>" "<short prompt>" "<done|partial|stuck>" -
+### What was accomplished
+- ...
+
+### Where we got stuck
+- ...
+
+### Next steps (pick up here)
+1. ...
+
+### Key AX facts learned
+- ...
+EOF
+```
+
+This automatically:
+- Appends a row to `sessions/log.md` (master timestamped log)
+- Upserts `sessions/<AppName>.md` (per-app running notes)
+- Pushes both to GitHub (`sidsingh973/myskills`)
+
+### On session start — load previous session
+When the user invokes dobeypilot, check for prior session notes:
+
+```bash
+python3 ~/.dobey/appcontext.py get "<AppName>"  # AX/UI knowledge
+# Also read session notes if they exist:
+cat ~/.claude/skills/sessions/<AppName>.md 2>/dev/null || echo "No prior session"
+```
+
+Use the "Next steps" section from the session file to resume exactly where you left off.
+
+### GitHub structure
+- `sessions/log.md` — master log, one row per session
+- `sessions/<AppName>.md` — per-app notes: prompts, accomplishments, stuck points, AX facts, next steps
+- `apps/<AppName>.json` — verified AX/UI knowledge (separate from session notes)
