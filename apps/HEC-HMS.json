@@ -1,0 +1,54 @@
+{
+  "description": "HEC-HMS 4.13 — USACE Hydrologic Modeling System for watershed rainfall-runoff simulation (Java Swing app on macOS)",
+  "app_ax_name": "HEC-HMS-4.13",
+  "platform": "macOS",
+  "main_window": "Three-pane layout: left panel (project/component tree), upper-right canvas (basin map, blue), lower-right panel (component details). Title bar shows project path when open.",
+  "menus": ["File", "Edit", "View", "Components", "GIS", "Parameters", "Compute", "Results", "Tools", "Help"],
+  "ax_notes": "Java Swing app — AXTitle/AXDescription are blank on most elements. Use AX tree index (sorted by y then x) to identify buttons. Use AppleScript for typing into text fields. Always call app.activate() before interacting.",
+  "key_elements": [
+    {"name": "Project dropdown", "location": "toolbar row 1 — shows active project name"},
+    {"name": "Basin model dropdown", "location": "toolbar row 2"},
+    {"name": "Simulation run dropdown", "location": "toolbar row 3"},
+    {"name": "Play/Compute button", "location": "toolbar row 3 — runs selected simulation"}
+  ],
+  "workflows": [
+    {
+      "name": "Create new project",
+      "verified": "2026-05-07",
+      "steps": [
+        "1. python3 ~/.dobey/axcontrol.py menu 'HEC-HMS' 'File' 'New' && sleep 1.5",
+        "2. Verify dialog: check app.windows() for 'Create a New Project'",
+        "3. Click Name field center via pyautogui.click(field.AXPosition.x + width/2, field.AXPosition.y + height/2)",
+        "4. Type via AppleScript: osascript -e 'tell application \"System Events\" to tell process \"HEC-HMS-4.13\" to keystroke \"a\" using command down' then keystroke the project name",
+        "5. Verify via fields[0].AXValue",
+        "6. Collect AXButton elements from dialog, sort by (y, x). Button index 5 = CREATE (left ~84x29), index 6 = CANCEL (right ~86x29)",
+        "7. Press Create: buttons[5][4].Press()",
+        "8. Verify: window title changes to 'HEC-HMS 4.13 [/path/ProjectName.hms]'"
+      ],
+      "button_map": {
+        "Create": {"sorted_yx_index": 5, "approx_pos": [444, 533], "size": [84, 29]},
+        "Cancel": {"sorted_yx_index": 6, "approx_pos": [533, 533], "size": [86, 29]}
+      },
+      "field_map": {
+        "Name":        {"index": 0, "approx_center": [425, 428]},
+        "Description": {"index": 1, "approx_center": [425, 456]},
+        "Location":    {"index": 2, "approx_center": [425, 484]}
+      }
+    },
+    {
+      "name": "Open existing project",
+      "steps": [
+        "1. python3 ~/.dobey/axcontrol.py menu 'HEC-HMS' 'File' 'Open'",
+        "2. Navigate file dialog to .hms file and open"
+      ]
+    },
+    {
+      "name": "Run a simulation",
+      "steps": [
+        "1. Select simulation run from dropdown (toolbar row 3)",
+        "2. python3 ~/.dobey/axcontrol.py menu 'HEC-HMS' 'Compute' 'Compute Run'",
+        "3. Monitor Messages tab for completion"
+      ]
+    }
+  ]
+}
