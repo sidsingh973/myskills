@@ -31,3 +31,24 @@ Loads the previously saved session so you can pick up where you left off.
 ```
 /prevmem
 ```
+
+### /dobeypilot
+AI co-pilot that controls any desktop app through natural language using screenshots + macOS Accessibility API.
+```
+/dobeypilot HEC-HMS
+```
+See [dobeypilot/README.md](dobeypilot/README.md) for full documentation.
+
+---
+
+## App knowledge library
+
+Verified AX element maps and workflows for specific apps: [apps/](apps/)
+
+| App | Docs |
+|-----|------|
+| [HEC-HMS 4.13](apps/HEC-HMS.json) | [Full docs →](apps/hec-hms/) |
+
+## Session history
+
+Per-app running notes: [sessions/](sessions/)

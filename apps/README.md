@@ -15,9 +15,9 @@ After dobeypilot figures out a new app, it saves the workflow here as `apps/<App
 
 ## Apps
 
-| App | Platform | Notes |
-|-----|----------|-------|
-| [HEC-HMS](HEC-HMS.json) | macOS | USACE hydrologic modeling. Java Swing — uses AX index for buttons, AppleScript for text input. |
+| App | Platform | JSON | Full docs |
+|-----|----------|------|-----------|
+| HEC-HMS 4.13 | macOS | [HEC-HMS.json](HEC-HMS.json) | [hec-hms/](hec-hms/) |
 
 ## JSON schema
 

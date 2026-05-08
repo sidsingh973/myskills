@@ -11,19 +11,35 @@ Use the **macOS Accessibility API** (via `~/.dobey/axcontrol.py`) for all app co
 - Use AppleScript (`osascript`) to type text into fields.
 - Only fall back to `pyautogui` for actions the AX API can't handle (scrolling, drag).
 
-## Step 1 — Take a screenshot and identify the app
+## Step 0 — Start the capture daemon
 
-**Always use window-specific capture** — this works even when the app is hidden behind other windows:
+Start continuous screenshot access for the target app. This runs in the background and stops automatically when the session ends.
 
 ```bash
-# Preferred: capture by window ID (app can be behind other windows)
-python3 ~/.dobey/wincap.py capture "<AppName>" /tmp/dobeypilot.png
-
-# Fallback: full-screen capture (only if wincap fails)
-screencapture -x /tmp/dobeypilot.png
+python3 ~/.dobey/screencap/tool.py start "<AppName>"
+# Returns immediately. Writes live.png every 0.5s.
 ```
 
-Read `/tmp/dobeypilot.png`. Identify the main application name (e.g. "HEC-HMS", "ArcMap", "Excel").
+To stop at session end:
+```bash
+python3 ~/.dobey/screencap/tool.py stop
+```
+
+## Step 1 — Take a screenshot and identify the app
+
+Read the live capture (only when screen has changed — avoids unnecessary LLM calls):
+
+```bash
+python3 ~/.dobey/screencap/tool.py get --wait
+# Blocks until screen changes, returns JSON with path to live.png
+```
+
+Parse the JSON, read the `path` field, load the image. Identify the app name (e.g. "HEC-HMS", "ArcMap", "Excel").
+
+If the daemon isn't running yet, fall back to:
+```bash
+python3 ~/.dobey/wincap.py capture "<AppName>" /tmp/dobeypilot.png
+```
 
 ## Step 2 — Load cached context
 
@@ -193,11 +209,12 @@ osascript -e 'tell application "System Events" to tell process "<AppName>" to ke
 ```
 
 ## After each action
-1. Take a fresh screenshot to verify:
+1. Wait for the screen to update and read the fresh frame:
    ```bash
-   python3 ~/.dobey/wincap.py capture "<AppName>" /tmp/dobeypilot.png
+   python3 ~/.dobey/screencap/tool.py get --wait
+   # Returns JSON; read the "path" (live.png) when "changed" is true
    ```
-2. Read it and report what changed.
+2. Read the image and report what changed.
 3. Ask: *"Done — what's next?"*
 
 ## Rules
