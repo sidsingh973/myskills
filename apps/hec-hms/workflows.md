@@ -215,17 +215,52 @@ with zipfile.ZipFile(jar) as z:
 
 ---
 
-## GIS Preprocessing 🔬 (not yet run)
+## GIS Preprocessing ⚠️ (partially working — 2026-05-13)
 
-Requires the basin model to be open in the canvas first.
+### Steps 1–3 completed ✅
 
-Planned sequence:
-1. GIS > Preprocess Sinks
-2. GIS > Preprocess Drainage  
-3. GIS > Identify Streams
-4. GIS > Delineate Elements
+Terrain preprocessing ran successfully:
+- GIS > Preprocess Sinks → filled DEM in `terrain/Terrain_1/01/elevation.tif`
+- GIS > Preprocess Drainage → `flowdir.tif`, `flowaccum.tif` (max=3680 = watershed area in pixels)
+- GIS > Identify Streams → `str_bin.tif`, `streams.tif` (very low threshold ≈1, 223k stream pixels)
 
-Each step opens a dialog and runs terrain analysis. The output is a set of subbasins and reaches drawn on the canvas.
+### Step 4: Delineate Elements ⚠️ (outlet fixed, needs re-run)
+
+**Pre-conditions:**
+- Place outlet point INSIDE the DEM extent: X must be < 581360, Y must be between 4171986–4181896
+- Correct Castro Valley outlet: X=581359.324, Y=4171986.224
+- Check current placement: `sqlite3 gis/CastroValley/toGIS.sqlite "SELECT hex(GEOMETRY) FROM breakpoints ORDER BY rowid DESC LIMIT 1;"` → decode bytes 5-21 as two little-endian doubles
+
+**What works:**
+- Terrain preprocessing TauDEM steps (flowaccum, threshold) succeed ✅
+- subbasin row created in CastroValley.sqlite after delineation ✅
+
+**What fails:**
+- Reach creation fails with ERROR 46503 (NPE on SetAttributeFilter)
+- Root cause: TauDEM's streamnet produces empty coord.dat when outlet is outside DEM
+- After fixing outlet in toGIS.sqlite (rowid=7, X=581359), streamnet SHOULD succeed
+
+**Pre-inject watcher (insurance):**
+```bash
+# Kill any old watchers first (they may use wrong WKB)
+pkill -f delin_watcher
+# Start current watcher (plain 2D WKB, 50ms poll)
+python3 /tmp/delin_watcher3.py &
+```
+
+**Diagnostic: decode all delin dir outlets:**
+```python
+import struct, sqlite3
+from pathlib import Path
+for db in sorted(Path('gis/CastroValley').glob('delin_*/fromGIS.sqlite')):
+    c = sqlite3.connect(str(db))
+    row = c.execute('SELECT hex(GEOMETRY), id FROM breakpoints LIMIT 1').fetchone()
+    if row:
+        b = bytes.fromhex(row[0])
+        x, y = struct.unpack('<2d', b[5:21])
+        ok = '✓' if x < 581360 else '✗ OUTSIDE DEM'
+        print(f'{db.parent.name}: X={x:.1f} Y={y:.1f} {ok}')
+```
 
 ---
 

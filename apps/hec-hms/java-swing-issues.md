@@ -67,6 +67,25 @@ Jar search targets:
 
 **Root cause:** Java Swing `MouseListener.mouseClicked()` with `clickCount == 2` is what opens the item. The macOS AX "Press" action fires a single-click event. No AX mechanism to inject a Java-level double-click.
 
+**Workaround (untested):** Search hms.jar for the keyword that saves "which basin model is open" in the canvas — add it to `.hms` or `.basin` file before launching HEC-HMS, similar to how `Terrain:` was found.
+
+```python
+import zipfile, re
+jar = "/Applications/HEC-HMS-4.13.app/Contents/Resources/hms.jar"
+targets = ["hms/model/basin/", "hms/model/project/", "hms/gui/"]
+with zipfile.ZipFile(jar) as z:
+    for name in z.namelist():
+        if any(name.startswith(t) for t in targets) and name.endswith('.class'):
+            data = z.read(name)
+            strings = re.findall(rb'[ -~]{4,}', data)
+            for s in strings:
+                s = s.decode()
+                if any(kw in s.lower() for kw in ["open", "active", "display", "desktop", "window", "show"]):
+                    print(name, repr(s))
+```
+
+**Note:** This turned out not to be the blocking issue for Castro Valley — basin IS open in canvas and GIS preprocessing did run. The ERROR 46503 is from TauDEM/GDAL, not from the canvas not being open.
+
 ---
 
 ## Issue 4: "Open an Existing Project" dialog appears on activation
