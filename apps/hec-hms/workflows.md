@@ -187,31 +187,20 @@ PROJCS["UTM_ZONE_10N_Nad83",GEOGCS["NAD83",DATUM["North_American_Datum_1983",SPH
 
 ---
 
-## Open basin model in canvas ❌ (BLOCKED)
+## Open basin model in canvas ✅
 
-Last attempt: 2026-05-08. **Not yet solved.**
+Verified: 2026-05-13. Use AXPress on project tree rows + Enter key.
 
-**What's needed:** CastroValley basin model must be open in the canvas before GIS menu items become enabled.
+**Method:** Expand the project tree via `AXUIElementPerformAction(row, 'AXPress')`, select CastroValley, close Basin Model Manager, click the tree row, send Enter. See [java-swing-issues.md](java-swing-issues.md) Issue 3 for the full working code.
 
-**What was tried:**
-- Expanding the JTree "Basin Models" node: right arrow key, disclosure triangle click, CGEventPostToPid — all failed
-- Double-click on AXRow in Basin Model Manager: selects item but doesn't open it
-- `AXRow.Press()` in Basin Model Manager: executes without error but doesn't open model in canvas
-- AppleScript click, double-click: same result as pyautogui
+**Key insight:** The AXOutline IS exposed in the AX hierarchy — it just lives deep under the main window's AXSplitGroup. Java JTree handles Enter as "activate" which triggers the same code path as double-click. AX `Press` on a tree row toggles expand/collapse.
 
-**Next approach to try:**
-Search the HEC-HMS jar for the keyword that saves "which basin model was open in the canvas" — likely something in the `.hms` or `.basin` file, similar to how `Terrain:` in `Basin Spatial Properties:` was found. Adding this key to the file before opening HEC-HMS might pre-open the model without needing UI interaction.
+**Verification:** After running, the GIS menu items transition from disabled → enabled (Preprocess Sinks, Preprocess Drainage, Identify Streams, etc.).
 
-```python
-# Jar search pattern
-import zipfile, re
-jar = "/Applications/HEC/HEC-HMS/4.13/hms.jar"
-with zipfile.ZipFile(jar) as z:
-    for name in z.namelist():
-        data = z.read(name)
-        if b'Desktop' in data or b'Open Window' in data or b'Active Basin' in data:
-            print(name)
-```
+**Gotchas:**
+- AXPress on an already-expanded row will COLLAPSE it. Check `rows` count first.
+- Match rows by exact `AXDescription` equality, not substring — `'Castro' in desc` will match `FlowCastroValley` (the project root) before `CastroValley` (the basin).
+- BMM intercepts Enter key — must close BMM first via clicking the close button at window origin + (7, 14).
 
 ---
 

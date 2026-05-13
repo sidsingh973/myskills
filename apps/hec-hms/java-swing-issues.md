@@ -6,28 +6,47 @@ This page covers issues specific to HEC-HMS.
 
 ---
 
-## Issue 1: JTree won't expand ❌ UNRESOLVED
+## Issue 1: JTree won't expand ✅ RESOLVED (2026-05-13)
 
 **Where:** Project tree in the left panel (FlowCastroValley > Basin Models > CastroValley)
 
-**Symptom:** The "Basin Models" folder node cannot be expanded to reveal "CastroValley" via any automation method. The tree always shows the two top-level items (Basin Models, Terrain Data) but never expands to show basin model names.
+**Original symptom:** The "Basin Models" folder node could not be expanded via `pyautogui.press('right')`, AppleScript keystroke, or `CGEventPostToPid` keyboard events. AX API was assumed to have no tree element.
 
-**Impact:** Cannot click on "CastroValley" in the tree → cannot open basin model in canvas → all GIS menu items remain disabled.
+**Resolution:** The AXOutline element IS exposed — it just lives deep in the AX hierarchy. Use `AXUIElementPerformAction(row, 'AXPress')` on a tree row to toggle expansion. Each press toggles state (collapsed↔expanded).
 
-**Methods tried:**
-- `pyautogui.press('right')` after clicking the Basin Models row — no effect
-- AppleScript `keystroke (right arrow, key code 124)` — no effect
-- `CGEventPostToPid` with keyboard events (right arrow) — no effect
-- Clicking the disclosure triangle at approximate position (26–36, 103) via CGEventPostToPid — no effect
-- AX API has no tree/outline element to interact with (tree not exposed)
+**Working code:**
+```python
+import ApplicationServices as AS
+from AppKit import NSWorkspace
 
-**Root cause:** Java Swing JTree uses its own event dispatch and doesn't process synthetic keyboard/mouse events the same as native events for tree state changes.
+def get_attr(el, attr):
+    err, val = AS.AXUIElementCopyAttributeValue(el, attr, None)
+    return val if err == 0 else None
 
-**Next approach:** Search hms.jar for the keyword that marks a basin model as "open" in the canvas. This would allow pre-opening it via file edit before starting HEC-HMS.
+pid = next(a.processIdentifier() for a in NSWorkspace.sharedWorkspace().runningApplications()
+           if 'HEC-HMS' in (a.localizedName() or ''))
+ax_app = AS.AXUIElementCreateApplication(pid)
+_, windows = AS.AXUIElementCopyAttributeValue(ax_app, 'AXWindows', None)
+main_win = next(w for w in windows if 'FlowCastroValley' in (get_attr(w,'AXTitle') or ''))
 
-Jar search targets:
-- `Open Window`, `Desktop`, `Active Basin`, `Display`, `Show Basin`
-- Class files in `hms/model/`, `hms/project/`, `hms/ui/` packages
+def find_role(el, role, depth=0):
+    if depth > 10: return None
+    if get_attr(el, 'AXRole') == role: return el
+    for c in (get_attr(el, 'AXChildren') or []):
+        r = find_role(c, role, depth+1)
+        if r: return r
+
+outline = find_role(main_win, 'AXOutline')
+rows = get_attr(outline, 'AXChildren')
+
+# Press root → expands to show children
+AS.AXUIElementPerformAction(rows[0], 'AXPress')  # FlowCastroValley
+# Now rows includes Basin Models (and possibly CastroValley if already expanded)
+```
+
+**Critical gotcha:** AXPress on an already-expanded row will COLLAPSE it. Check the current row count before pressing — if CastroValley is already in `rows`, skip pressing Basin Models.
+
+**Match rows by exact description, NOT substring:** `'Castro' in desc` matches both `FlowCastroValley` (root) and `CastroValley` (basin). Use `get_attr(r, 'AXDescription') == 'CastroValley'`.
 
 ---
 
@@ -49,42 +68,75 @@ Jar search targets:
 
 ---
 
-## Issue 3: Basin Model Manager — double-click doesn't open ❌ UNRESOLVED
+## Issue 3: Open basin model in canvas ✅ RESOLVED (2026-05-13)
 
-**Where:** Basin Model Manager dialog (Components > Basin Model Manager)
+**Where:** Project tree, left panel (NOT Basin Model Manager — BMM double-click is still broken)
 
-**Symptom:** The AXList shows the CastroValley row. Single-click selects it (turns blue). Double-click does NOT open the basin model in the canvas.
+**The double-click problem:** Java Swing `MouseListener.mouseClicked(clickCount==2)` is what opens basin models. AX `Press` action fires single-click; synthetic CGEvent double-clicks don't trigger Swing's double-click handler. No way to inject a Java-level double-click via macOS AX.
 
-**Methods tried:**
-- `pyautogui.doubleClick(x, y)` — selects row, no open
-- `CGEventPostToPid` with mouse double-click events — selects row, no open
-- `AXRow.Press()` — executes without error, doesn't open model
-- `AXRow.Press()` twice rapidly — same, no open
-- Enter key after selecting — no effect
-- `row.AXSelected = True` + Enter — no effect
+**Working solution: AXPress + click + Enter on the project tree**
 
-**Only available AX action:** `'Press'` — confirmed via `row.getActions()` returning `['Press']`. Press = single click equivalent.
-
-**Root cause:** Java Swing `MouseListener.mouseClicked()` with `clickCount == 2` is what opens the item. The macOS AX "Press" action fires a single-click event. No AX mechanism to inject a Java-level double-click.
-
-**Workaround (untested):** Search hms.jar for the keyword that saves "which basin model is open" in the canvas — add it to `.hms` or `.basin` file before launching HEC-HMS, similar to how `Terrain:` was found.
+1. Expand the tree via `AXPress` on rows to reveal CastroValley
+2. Close the Basin Model Manager window (it intercepts Enter key)
+3. Click the CastroValley row position (focuses tree item)
+4. Send `keystroke return` via AppleScript — Java JTree handles Enter as "activate" which triggers the same path as double-click
 
 ```python
-import zipfile, re
-jar = "/Applications/HEC-HMS-4.13.app/Contents/Resources/hms.jar"
-targets = ["hms/model/basin/", "hms/model/project/", "hms/gui/"]
-with zipfile.ZipFile(jar) as z:
-    for name in z.namelist():
-        if any(name.startswith(t) for t in targets) and name.endswith('.class'):
-            data = z.read(name)
-            strings = re.findall(rb'[ -~]{4,}', data)
-            for s in strings:
-                s = s.decode()
-                if any(kw in s.lower() for kw in ["open", "active", "display", "desktop", "window", "show"]):
-                    print(name, repr(s))
+import ApplicationServices as AS
+import Quartz, time, subprocess, re
+
+# (after locating outline + rows as in Issue 1)
+
+# 1. Expand to reveal CastroValley
+root_row = next(r for r in rows if get_attr(r,'AXDescription') == 'FlowCastroValley')
+AS.AXUIElementPerformAction(root_row, 'AXPress')
+time.sleep(0.5)
+rows = get_attr(outline, 'AXChildren')
+
+# If Basin Models still collapsed, press it (DON'T press again if already expanded — it'll collapse)
+if not any(get_attr(r,'AXDescription') == 'CastroValley' for r in rows):
+    bm_row = next(r for r in rows if get_attr(r,'AXDescription') == 'Basin Models')
+    AS.AXUIElementPerformAction(bm_row, 'AXPress')
+    time.sleep(0.5)
+    rows = get_attr(outline, 'AXChildren')
+
+cv_row = next(r for r in rows if get_attr(r,'AXDescription') == 'CastroValley')
+AS.AXUIElementPerformAction(cv_row, 'AXPress')  # select
+time.sleep(0.3)
+
+# 2. Close BMM if open (close button is ~7px right, 14px down from window origin)
+for w in windows:
+    if 'Basin Model Manager' in (get_attr(w,'AXTitle') or ''):
+        pos = get_attr(w, 'AXPosition')
+        m = re.search(r'x:([\d.]+).*?y:([\d.]+)', str(pos))
+        bx, by = float(m.group(1)), float(m.group(2))
+        pt = Quartz.CGPoint(bx + 7, by + 14)
+        for evt in [Quartz.kCGEventLeftMouseDown, Quartz.kCGEventLeftMouseUp]:
+            e = Quartz.CGEventCreateMouseEvent(None, evt, pt, Quartz.kCGMouseButtonLeft)
+            Quartz.CGEventPost(Quartz.kCGHIDEventTap, e)
+            time.sleep(0.05)
+        time.sleep(0.8)
+
+# 3. Click tree position to confirm focus
+cv_pos = get_attr(cv_row, 'AXPosition')
+m = re.search(r'x:([\d.]+).*?y:([\d.]+)', str(cv_pos))
+cv_y = float(m.group(2))
+pt = Quartz.CGPoint(80.0, cv_y)
+for evt in [Quartz.kCGEventLeftMouseDown, Quartz.kCGEventLeftMouseUp]:
+    e = Quartz.CGEventCreateMouseEvent(None, evt, pt, Quartz.kCGMouseButtonLeft)
+    Quartz.CGEventPost(Quartz.kCGHIDEventTap, e)
+    time.sleep(0.05)
+time.sleep(0.3)
+
+# 4. Enter key opens the basin model in canvas
+subprocess.run(['osascript', '-e',
+    'tell application "System Events" to tell process "HEC-HMS-4.13" to keystroke return'])
+time.sleep(2.0)
 ```
 
-**Note:** This turned out not to be the blocking issue for Castro Valley — basin IS open in canvas and GIS preprocessing did run. The ERROR 46503 is from TauDEM/GDAL, not from the canvas not being open.
+**Verification:** After running, the GIS menu items (Preprocess Sinks, Drainage, Identify Streams, etc.) transition from disabled → enabled. Title bar shows `Basin Model [CastroValley]` in the inspector pane.
+
+**Note:** Basin Model Manager (Components > Basin Model Manager) double-click still does NOT work — the only path is through the project tree.
 
 ---
 
@@ -137,5 +189,6 @@ for w in app.windows():
 | Type text into any field | AppleScript `keystroke` | ✅ Always works |
 | Read field values | `field.AXValue` | ✅ Always works |
 | Select item in manager list | `pyautogui.click` on AXRow | ✅ Works with app frontmost |
-| Open basin model in canvas | ❌ | Blocked — see Issue 1 & 3 |
+| Open basin model in canvas | AXPress tree row + click + Enter key | ✅ Via project tree (NOT BMM) |
+| Expand JTree node | `AXUIElementPerformAction(row, 'AXPress')` | ✅ Toggles expand/collapse |
 | Change a combo box value | File edit workaround | ✅ File edit only |
