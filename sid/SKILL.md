@@ -3,7 +3,7 @@ name: sid
 description: Load Siddharth's personal profile so Claude has full context on who he is, his background, goals, and working style.
 ---
 
-Read the file `/Users/siddharthsingh/.claude/skills/sid/profile.md` using the Read tool.
+Read the file `~/.claude/sid/profile.md` using the Read tool. If it doesn't exist, say "No profile found on this machine. Paste your profile and I'll save it with /sidupdate." and stop.
 
 Then:
 1. Confirm: "Profile loaded — I know who I'm working with."
