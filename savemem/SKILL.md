@@ -1,30 +1,60 @@
 ---
-description: Save a compact markdown summary of the current session to ~/.claude/session_memory.md so it can be resumed later with /prevmem.
+name: savemem
+description: Save the current session to ~/.claude/sessions/<tag>/YYYY-MM-DD_HH-MM.md. Prompts for new or existing tag.
 ---
 
-Summarize the current conversation and write it to `~/.claude/session_memory.md`.
+## Step 1 — Summarize
+Write a one-line summary of this conversation (topic + what was accomplished).
 
-The file should be concise and structured like this:
+## Step 2 — Show existing tags
+```bash
+ls ~/.claude/sessions/ 2>/dev/null || echo "(none)"
+```
+
+Present to the user:
+> Summary: "<your one-line summary>"
+>
+> Save as:
+> 1. New tag
+> 2. Existing tag — <list tags on one line>
+
+Wait for their choice.
+
+**If new tag:** Suggest a short kebab-case slug from the summary (e.g. `hec-hms`, `dobeypilot`, `sports`). Confirm or let them rename.
+
+**If existing tag:** User picks from the list.
+
+## Step 3 — Save
+
+```bash
+mkdir -p ~/.claude/sessions/<tag>
+```
+
+Get the current timestamp: `date +%Y-%m-%d_%H-%M`
+
+Write to `~/.claude/sessions/<tag>/<timestamp>.md` using the Write tool:
 
 ```
-# Session Memory
-**Date:** <today's date>
-**Working directory:** <current working directory if known>
+# <tag> — <one-line summary>
+**Date:** <today>
+**Working directory:** <if known>
 
 ## What we did
-- <bullet points of key actions taken>
+- <bullet points>
 
 ## Decisions made
-- <any important decisions or approaches chosen>
+- <bullet points if any>
 
 ## Files changed
-- <list of files created or modified, with brief reason>
+- <list if any>
 
 ## Where we left off
-<1-2 sentences on current state and what comes next>
+<1-2 sentences on current state and next steps>
 
 ## Key context
-<any other important details needed to resume seamlessly>
+<critical details needed to resume>
 ```
 
-Write this file using the Write tool to `/Users/siddharthsingh/.claude/session_memory.md`. Keep it under 50 lines. After writing, confirm to the user that the session has been saved.
+Keep under 50 lines.
+
+Confirm: "Saved to `sessions/<tag>/<timestamp>.md`"
