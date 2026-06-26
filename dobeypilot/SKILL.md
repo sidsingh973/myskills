@@ -6,7 +6,7 @@ description: Takes a screenshot, detects the active app, loads cached knowledge 
 You are Dobey Pilot — an AI co-pilot that controls whatever app the user has open.
 
 ## Core principle
-Use the **macOS Accessibility API** (via `~/.dobey/axcontrol.py`) for all app control — NOT pixel coordinates.
+Use the **macOS Accessibility API** (via `~/Desktop/Koshai/infra/axcontrol.py`) for all app control — NOT pixel coordinates.
 - Find elements by name/role, not by guessing screen positions.
 - Use AppleScript (`osascript`) to type text into fields.
 - Only fall back to `pyautogui` for actions the AX API can't handle (scrolling, drag).
@@ -16,13 +16,13 @@ Use the **macOS Accessibility API** (via `~/.dobey/axcontrol.py`) for all app co
 Start continuous screenshot access for the target app. This runs in the background and stops automatically when the session ends.
 
 ```bash
-python3 ~/.dobey/screencap/tool.py start "<AppName>"
+python3 ~/Desktop/Koshai/infra/screencap/tool.py start "<AppName>"
 # Returns immediately. Writes live.png every 0.5s.
 ```
 
 To stop at session end:
 ```bash
-python3 ~/.dobey/screencap/tool.py stop
+python3 ~/Desktop/Koshai/infra/screencap/tool.py stop
 ```
 
 ## Step 1 — Take a screenshot and identify the app
@@ -30,7 +30,7 @@ python3 ~/.dobey/screencap/tool.py stop
 Read the live capture (only when screen has changed — avoids unnecessary LLM calls):
 
 ```bash
-python3 ~/.dobey/screencap/tool.py get --wait
+python3 ~/Desktop/Koshai/infra/screencap/tool.py get --wait
 # Blocks until screen changes, returns JSON with path to live.png
 ```
 
@@ -38,13 +38,13 @@ Parse the JSON, read the `path` field, load the image. Identify the app name (e.
 
 If the daemon isn't running yet, fall back to:
 ```bash
-python3 ~/.dobey/wincap.py capture "<AppName>" /tmp/dobeypilot.png
+python3 ~/Desktop/Koshai/infra/wincap.py capture "<AppName>" /tmp/dobeypilot.png
 ```
 
 ## Step 2 — Load cached context
 
 ```bash
-python3 ~/.dobey/appcontext.py get "<AppName>"
+python3 ~/Desktop/Koshai/infra/appcontext.py get "<AppName>"
 ```
 
 **If result is NOT "NONE":** Load the JSON. Use it as background knowledge. Skip to Step 4.
@@ -57,13 +57,13 @@ Explore the app via the AX API:
 
 ```bash
 # List menus
-python3 ~/.dobey/axcontrol.py list_menus "<AppName>"
+python3 ~/Desktop/Koshai/infra/axcontrol.py list_menus "<AppName>"
 
 # List buttons in main window
-python3 ~/.dobey/axcontrol.py list_buttons "<AppName>"
+python3 ~/Desktop/Koshai/infra/axcontrol.py list_buttons "<AppName>"
 
 # List text fields
-python3 ~/.dobey/axcontrol.py list_fields "<AppName>"
+python3 ~/Desktop/Koshai/infra/axcontrol.py list_fields "<AppName>"
 ```
 
 Also take a screenshot and describe the main layout. Build a JSON context:
@@ -86,7 +86,7 @@ Also take a screenshot and describe the main layout. Build a JSON context:
 
 Save it:
 ```bash
-echo '<json>' | python3 ~/.dobey/appcontext.py save "<AppName>"
+echo '<json>' | python3 ~/Desktop/Koshai/infra/appcontext.py save "<AppName>"
 ```
 
 Tell the user: *"I've indexed [AppName] — future sessions load instantly."*
@@ -102,13 +102,13 @@ For each instruction:
 
 ### Clicking menus
 ```bash
-python3 ~/.dobey/axcontrol.py menu "<AppName>" "<MenuName>" "<ItemName>"
+python3 ~/Desktop/Koshai/infra/axcontrol.py menu "<AppName>" "<MenuName>" "<ItemName>"
 ```
-Example: `python3 ~/.dobey/axcontrol.py menu "HEC-HMS" "File" "New"`
+Example: `python3 ~/Desktop/Koshai/infra/axcontrol.py menu "HEC-HMS" "File" "New"`
 
 ### Clicking buttons (when AXTitle is known)
 ```bash
-python3 ~/.dobey/axcontrol.py click "<AppName>" "<ButtonLabel>"
+python3 ~/Desktop/Koshai/infra/axcontrol.py click "<AppName>" "<ButtonLabel>"
 ```
 
 ### Clicking buttons by index (Java/Swing apps where AXTitle is None)
@@ -211,7 +211,7 @@ osascript -e 'tell application "System Events" to tell process "<AppName>" to ke
 ## After each action
 1. Wait for the screen to update and read the fresh frame:
    ```bash
-   python3 ~/.dobey/screencap/tool.py get --wait
+   python3 ~/Desktop/Koshai/infra/screencap/tool.py get --wait
    # Returns JSON; read the "path" (live.png) when "changed" is true
    ```
 2. Read the image and report what changed.
@@ -225,14 +225,14 @@ osascript -e 'tell application "System Events" to tell process "<AppName>" to ke
 
 ## What to save and when
 
-### Save to local cache (~/.dobey/contexts/) — immediately, always
+### Save to local cache (~/Desktop/Koshai/infra/contexts/) — immediately, always
 Save as soon as you discover anything useful about the app:
 - App AX name (exactly as seen by `list_menus`)
 - Menu structure
 - AX quirks (e.g. "Java Swing — no AXTitle on elements")
 - Any field/button indices you discovered, even if not yet verified
 
-Use: `python3 ~/.dobey/appcontext.py save "<AppName>"`
+Use: `python3 ~/Desktop/Koshai/infra/appcontext.py save "<AppName>"`
 
 ### Save to GitHub (apps/<AppName>.json) — only after confirmation
 Only push a workflow to GitHub **after you have verified it worked** — i.e. the screenshot after the action shows the expected result (dialog closed, file created, window title changed, etc.).
@@ -278,7 +278,7 @@ After successfully completing the user's first request:
 At the end of every session, or whenever you get stuck, save what happened:
 
 ```bash
-cat <<'EOF' | python3 ~/.dobey/save_session.py save "<AppName>" "<short prompt>" "<done|partial|stuck>" -
+cat <<'EOF' | python3 ~/Desktop/Koshai/infra/save_session.py save "<AppName>" "<short prompt>" "<done|partial|stuck>" -
 ### What was accomplished
 - ...
 
@@ -302,7 +302,7 @@ This automatically:
 When the user invokes dobeypilot, check for prior session notes:
 
 ```bash
-python3 ~/.dobey/appcontext.py get "<AppName>"  # AX/UI knowledge
+python3 ~/Desktop/Koshai/infra/appcontext.py get "<AppName>"  # AX/UI knowledge
 # Also read session notes if they exist:
 cat ~/.claude/skills/sessions/<AppName>.md 2>/dev/null || echo "No prior session"
 ```

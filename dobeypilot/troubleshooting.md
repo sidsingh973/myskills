@@ -4,25 +4,25 @@
 
 ### Daemon won't start / immediately exits
 ```bash
-python3 ~/.dobey/screencap/capture.py status
+python3 ~/Desktop/Koshai/infra/screencap/capture.py status
 # if "not running (stale PID file)":
-rm ~/.dobey/screencap/capture.pid
-python3 ~/.dobey/screencap/tool.py start "AppName"
+rm ~/Desktop/Koshai/infra/screencap/capture.pid
+python3 ~/Desktop/Koshai/infra/screencap/tool.py start "AppName"
 ```
 
 ### `No window found for 'AppName'`
 The app name you passed doesn't match the CGWindowOwnerName. List running apps:
 ```bash
-python3 ~/.dobey/screencap/capture.py --list
+python3 ~/Desktop/Koshai/infra/screencap/capture.py --list
 ```
 Then use the exact name shown (e.g., `HEC-HMS-4.13` not `HEC-HMS`).
 
 ### live.png not updating
 ```bash
-python3 ~/.dobey/screencap/tool.py status
+python3 ~/Desktop/Koshai/infra/screencap/tool.py status
 # check "last=X.Xs ago" — if > 5s something is wrong
-python3 ~/.dobey/screencap/tool.py stop
-python3 ~/.dobey/screencap/tool.py start "AppName"
+python3 ~/Desktop/Koshai/infra/screencap/tool.py stop
+python3 ~/Desktop/Koshai/infra/screencap/tool.py start "AppName"
 ```
 
 ### `unknown file extension: .tmp` crash
@@ -95,7 +95,7 @@ git pull --rebase origin main
 
 ### App context not loading from GitHub
 ```bash
-python3 ~/.dobey/appcontext.py get "AppName"
+python3 ~/Desktop/Koshai/infra/appcontext.py get "AppName"
 # if NONE:
 # manually check apps/AppName.json exists on GitHub
 # pull latest:

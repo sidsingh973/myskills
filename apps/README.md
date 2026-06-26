@@ -5,7 +5,7 @@ App-specific knowledge files for [dobeypilot](../dobeypilot/SKILL.md) — each f
 ## How it works
 
 When dobeypilot encounters an app it hasn't seen before, it checks:
-1. Local cache (`~/.dobey/contexts/<AppName>.json`) — fastest
+1. Local cache (`~/Desktop/Koshai/infra/contexts/<AppName>.json`) — fastest
 2. This GitHub library — pulls and caches locally for future sessions
 3. If neither exists — indexes the app live and saves back to both
 

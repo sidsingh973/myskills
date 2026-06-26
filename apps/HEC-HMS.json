@@ -16,7 +16,7 @@
       "name": "Create new project",
       "verified": "2026-05-07",
       "steps": [
-        "1. python3 ~/.dobey/axcontrol.py menu 'HEC-HMS' 'File' 'New' && sleep 1.5",
+        "1. python3 ~/Desktop/Koshai/infra/axcontrol.py menu 'HEC-HMS' 'File' 'New' && sleep 1.5",
         "2. Verify dialog: check app.windows() for 'Create a New Project'",
         "3. Click Name field center via pyautogui.click(field.AXPosition.x + width/2, field.AXPosition.y + height/2)",
         "4. Type via AppleScript: osascript -e 'tell application \"System Events\" to tell process \"HEC-HMS-4.13\" to keystroke \"a\" using command down' then keystroke the project name",
@@ -38,7 +38,7 @@
     {
       "name": "Open existing project",
       "steps": [
-        "1. python3 ~/.dobey/axcontrol.py menu 'HEC-HMS' 'File' 'Open'",
+        "1. python3 ~/Desktop/Koshai/infra/axcontrol.py menu 'HEC-HMS' 'File' 'Open'",
         "2. Navigate file dialog to .hms file and open"
       ]
     },
@@ -46,7 +46,7 @@
       "name": "Run a simulation",
       "steps": [
         "1. Select simulation run from dropdown (toolbar row 3)",
-        "2. python3 ~/.dobey/axcontrol.py menu 'HEC-HMS' 'Compute' 'Compute Run'",
+        "2. python3 ~/Desktop/Koshai/infra/axcontrol.py menu 'HEC-HMS' 'Compute' 'Compute Run'",
         "3. Monitor Messages tab for completion"
       ]
     }

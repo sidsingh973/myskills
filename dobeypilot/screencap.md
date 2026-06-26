@@ -8,25 +8,25 @@ A background daemon that continuously captures any app's window and writes `live
 
 ```bash
 # Start (returns immediately, daemon runs in background)
-python3 ~/.dobey/screencap/tool.py start "HEC-HMS"
+python3 ~/Desktop/Koshai/infra/screencap/tool.py start "HEC-HMS"
 
 # Read current frame (non-blocking)
-python3 ~/.dobey/screencap/tool.py get
+python3 ~/Desktop/Koshai/infra/screencap/tool.py get
 
 # Wait for next screen change, then return
-python3 ~/.dobey/screencap/tool.py get --wait
+python3 ~/Desktop/Koshai/infra/screencap/tool.py get --wait
 
 # Stop
-python3 ~/.dobey/screencap/tool.py stop
+python3 ~/Desktop/Koshai/infra/screencap/tool.py stop
 ```
 
 ## Output files
 
 | File | Contents |
 |------|----------|
-| `~/.dobey/screencap/live.png` | Latest composited screenshot (window + menu bar) |
-| `~/.dobey/screencap/status.json` | `{changed, frame, timestamp, app, diff}` |
-| `~/.dobey/screencap/capture.pid` | Daemon PID (removed on clean exit) |
+| `~/Desktop/Koshai/infra/screencap/live.png` | Latest composited screenshot (window + menu bar) |
+| `~/Desktop/Koshai/infra/screencap/status.json` | `{changed, frame, timestamp, app, diff}` |
+| `~/Desktop/Koshai/infra/screencap/capture.pid` | Daemon PID (removed on clean exit) |
 
 ## status.json fields
 

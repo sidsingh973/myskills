@@ -1,3 +1,7 @@
+---
+description: Launch JupyterLab wired to the project's Python env with cell outputs synced for Claude. Use when the user types /jupyter (optionally with a path, run, status, stop, or reset).
+---
+
 # Skill: jupyter
 Trigger: user types `/jupyter` (optionally with a path, `status`, `stop`, or `reset`)
 
@@ -6,8 +10,8 @@ Launches JupyterLab in a browser (folder tree left, notebook right) with the ker
 auto-wired to the project's Python environment. nb_watcher syncs all cell outputs so
 Claude can read stdout, plots, and errors without any manual steps.
 
-Launcher: `~/.dobey/jupyter/launch_jupyter.sh`
-Outputs:  `~/.dobey/jupyter/outputs/`
+Launcher: `~/Desktop/Koshai/infra/jupyter/launch_jupyter.sh`
+Outputs:  `~/Desktop/Koshai/infra/jupyter/outputs/`
 
 ---
 
@@ -27,12 +31,12 @@ Outputs:  `~/.dobey/jupyter/outputs/`
 Run this Bash command, passing the resolved WORKDIR:
 
 ```bash
-bash ~/.dobey/jupyter/launch_jupyter.sh "$(pwd)"
+bash ~/Desktop/Koshai/infra/jupyter/launch_jupyter.sh "$(pwd)"
 ```
 
 Or with a path argument:
 ```bash
-bash ~/.dobey/jupyter/launch_jupyter.sh "/path/to/project"
+bash ~/Desktop/Koshai/infra/jupyter/launch_jupyter.sh "/path/to/project"
 ```
 
 Show the full script output to the user verbatim. The script handles everything:
@@ -46,7 +50,7 @@ If the script exits with code 1, show the error and stop — do not retry.
 ## Step 3 — `status` subcommand
 
 ```bash
-cat ~/.dobey/jupyter/outputs/manifest.json 2>/dev/null || echo "No outputs yet."
+cat ~/Desktop/Koshai/infra/jupyter/outputs/manifest.json 2>/dev/null || echo "No outputs yet."
 ```
 
 Also check liveness:
@@ -56,7 +60,7 @@ RUNTIME_DIR=$(python3 -c "from jupyter_core.paths import jupyter_runtime_dir; pr
 ls "$RUNTIME_DIR"/jpserver-*.json 2>/dev/null | wc -l
 
 # Watcher
-[ -f ~/.dobey/jupyter/.watcher.pid ] && kill -0 $(cat ~/.dobey/jupyter/.watcher.pid) 2>/dev/null && echo "watcher alive" || echo "watcher not running"
+[ -f ~/Desktop/Koshai/infra/jupyter/.watcher.pid ] && kill -0 $(cat ~/Desktop/Koshai/infra/jupyter/.watcher.pid) 2>/dev/null && echo "watcher alive" || echo "watcher not running"
 ```
 
 Report to user:
@@ -79,7 +83,7 @@ for f in "$RUNTIME_DIR"/jpserver-*.json; do
 done
 
 # Kill watcher
-WPID_FILE=~/.dobey/jupyter/.watcher.pid
+WPID_FILE=~/Desktop/Koshai/infra/jupyter/.watcher.pid
 if [ -f "$WPID_FILE" ]; then
   kill $(cat "$WPID_FILE") 2>/dev/null && echo "Stopped watcher."
   rm -f "$WPID_FILE"
@@ -94,7 +98,7 @@ Tell user: "Jupyter stopped. Run /jupyter to restart."
 
 Confirm with user first. Then:
 ```bash
-rm -f ~/.dobey/jupyter/outputs/cell_*
+rm -f ~/Desktop/Koshai/infra/jupyter/outputs/cell_*
 ```
 
 Tell user: "Output cache cleared. Notebook source untouched. Use Kernel → Restart Kernel
@@ -106,10 +110,10 @@ in JupyterLab to reset the kernel state."
 
 When the user asks "what did cell N produce?" or "show me the plot from cell 2":
 
-1. `Read(~/.dobey/jupyter/outputs/manifest.json)` — find which files belong to that cell
-2. For text: `Read(~/.dobey/jupyter/outputs/cell_N_stdout.txt)`
-3. For images: `Read(~/.dobey/jupyter/outputs/cell_N_img_0.png)` — renders inline (multimodal)
-4. For errors: `Read(~/.dobey/jupyter/outputs/cell_N_error.txt)`
+1. `Read(~/Desktop/Koshai/infra/jupyter/outputs/manifest.json)` — find which files belong to that cell
+2. For text: `Read(~/Desktop/Koshai/infra/jupyter/outputs/cell_N_stdout.txt)`
+3. For images: `Read(~/Desktop/Koshai/infra/jupyter/outputs/cell_N_img_0.png)` — renders inline (multimodal)
+4. For errors: `Read(~/Desktop/Koshai/infra/jupyter/outputs/cell_N_error.txt)`
 
 manifest.json cell entry shape:
 ```json
@@ -131,11 +135,11 @@ manifest.json cell entry shape:
 ## Step 6 — `run` subcommand (agents: no browser needed)
 
 Execute code directly in the project kernel. Output appears immediately in the terminal.
-Plots are saved to `~/.dobey/jupyter/outputs/` and readable via manifest.
+Plots are saved to `~/Desktop/Koshai/infra/jupyter/outputs/` and readable via manifest.
 
 **Single line:**
 ```bash
-python3 ~/.dobey/jupyter/exec.py "$(pwd)" "print(1 + 1)"
+python3 ~/Desktop/Koshai/infra/jupyter/exec.py "$(pwd)" "print(1 + 1)"
 ```
 
 **Multi-line code — write to a temp file, then run:**
@@ -155,20 +159,20 @@ plt.tight_layout()
 plt.show()
 print("plot done")
 PYEOF
-python3 ~/.dobey/jupyter/exec.py "$(pwd)" --file /tmp/jupyter_run.py
+python3 ~/Desktop/Koshai/infra/jupyter/exec.py "$(pwd)" --file /tmp/jupyter_run.py
 ```
 
 What comes back:
 - stdout printed directly to terminal
-- `[plot → ~/.dobey/jupyter/outputs/cell_0_<ts>_plot_0.png]` if there's a figure
+- `[plot → ~/Desktop/Koshai/infra/jupyter/outputs/cell_0_<ts>_plot_0.png]` if there's a figure
 - STDERR printed to stderr if there's an error
 - manifest.json updated automatically — no separate watcher step needed
 
 To read the plot Claude just produced:
 ```
-Read(~/.dobey/jupyter/outputs/cell_0_<ts>_plot_0.png)
+Read(~/Desktop/Koshai/infra/jupyter/outputs/cell_0_<ts>_plot_0.png)
 ```
-Or check manifest first: `cat ~/.dobey/jupyter/outputs/manifest.json`
+Or check manifest first: `cat ~/Desktop/Koshai/infra/jupyter/outputs/manifest.json`
 
 ---
 
@@ -176,9 +180,9 @@ Or check manifest first: `cat ~/.dobey/jupyter/outputs/manifest.json`
 
 To have Claude re-execute the whole notebook (not just read saved outputs):
 ```bash
-python3 ~/.dobey/jupyter/nb_watcher.py scratch.ipynb --execute --once
+python3 ~/Desktop/Koshai/infra/jupyter/nb_watcher.py scratch.ipynb --execute --once
 ```
 Or start a watch loop that re-executes on every save:
 ```bash
-python3 ~/.dobey/jupyter/nb_watcher.py scratch.ipynb --execute
+python3 ~/Desktop/Koshai/infra/jupyter/nb_watcher.py scratch.ipynb --execute
 ```

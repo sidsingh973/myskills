@@ -12,8 +12,8 @@ Or just type `/dobeypilot` — it will detect the active app automatically from 
 
 ## What it does
 
-1. **Starts a continuous screenshot daemon** that captures the target app's window every 0.5 seconds into `~/.dobey/screencap/live.png`. Change detection avoids unnecessary LLM calls.
-2. **Loads cached knowledge** about the app (menus, button positions, AX quirks) from `~/.dobey/contexts/` or the GitHub library at `apps/`.
+1. **Starts a continuous screenshot daemon** that captures the target app's window every 0.5 seconds into `~/Desktop/Koshai/infra/screencap/live.png`. Change detection avoids unnecessary LLM calls.
+2. **Loads cached knowledge** about the app (menus, button positions, AX quirks) from `~/Desktop/Koshai/infra/contexts/` or the GitHub library at `apps/`.
 3. **Executes your commands** using the macOS Accessibility API — clicks menus by name, types text via AppleScript, finds buttons by their AX role/description — no pixel guessing.
 4. **Verifies each action** by reading the next changed frame from the screenshot daemon.
 5. **Saves session state** to GitHub so the next session picks up exactly where you left off.
@@ -32,11 +32,11 @@ Or just type `/dobeypilot` — it will detect the active app automatically from 
 
 | Path | Purpose |
 |------|---------|
-| `~/.dobey/screencap/capture.py` | The background capture daemon |
-| `~/.dobey/screencap/tool.py` | Tool interface dobeypilot calls |
-| `~/.dobey/axcontrol.py` | Accessibility API wrapper (click, menu, type) |
-| `~/.dobey/appcontext.py` | Load/save app knowledge cache |
-| `~/.dobey/save_session.py` | Append session notes to GitHub |
+| `~/Desktop/Koshai/infra/screencap/capture.py` | The background capture daemon |
+| `~/Desktop/Koshai/infra/screencap/tool.py` | Tool interface dobeypilot calls |
+| `~/Desktop/Koshai/infra/axcontrol.py` | Accessibility API wrapper (click, menu, type) |
+| `~/Desktop/Koshai/infra/appcontext.py` | Load/save app knowledge cache |
+| `~/Desktop/Koshai/infra/save_session.py` | Append session notes to GitHub |
 
 ## App knowledge library
 

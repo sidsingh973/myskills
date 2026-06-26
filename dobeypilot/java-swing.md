@@ -17,7 +17,7 @@ Java Swing renders its own UI using Java2D/OpenGL, then hands the composed frame
 ### Menus — fully reliable
 Java Swing's `JMenuBar` is wrapped in a real macOS menu bar. Works perfectly:
 ```bash
-python3 ~/.dobey/axcontrol.py menu "HEC-HMS-4.13" "File" "New"
+python3 ~/Desktop/Koshai/infra/axcontrol.py menu "HEC-HMS-4.13" "File" "New"
 ```
 
 ### Button clicks by AX index — reliable

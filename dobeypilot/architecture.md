@@ -12,7 +12,7 @@ User instruction
       │        └── live.png + status.json
       │
       ├── App knowledge cache              ← loaded once per session
-      │        └── ~/.dobey/contexts/<App>.json
+      │        └── ~/Desktop/Koshai/infra/contexts/<App>.json
       │
       ├── Accessibility API (axcontrol.py) ← for every action
       │        └── atomacos / AppKit AX
@@ -22,7 +22,7 @@ User instruction
 
 ## Component 1 — Screenshot Daemon
 
-**File:** `~/.dobey/screencap/capture.py`
+**File:** `~/Desktop/Koshai/infra/screencap/capture.py`
 
 Runs as a background process (`subprocess.Popen(..., start_new_session=True)`). The parent (dobeypilot) returns immediately; the child loop runs indefinitely.
 
@@ -44,7 +44,7 @@ Runs as a background process (`subprocess.Popen(..., start_new_session=True)`). 
 
 ## Component 2 — Tool Interface
 
-**File:** `~/.dobey/screencap/tool.py`
+**File:** `~/Desktop/Koshai/infra/screencap/tool.py`
 
 The clean interface dobeypilot calls:
 
@@ -83,7 +83,7 @@ Wraps `atomacos` (Python bindings to macOS Accessibility API).
 
 ## Component 4 — App Knowledge Cache
 
-**Files:** `~/.dobey/contexts/<AppName>.json` (local) and `apps/<AppName>.json` (GitHub)
+**Files:** `~/Desktop/Koshai/infra/contexts/<AppName>.json` (local) and `apps/<AppName>.json` (GitHub)
 
 Loaded at session start. Contains:
 - App's exact AX process name (e.g., `"HEC-HMS-4.13"` not `"HEC-HMS"`)
@@ -96,7 +96,7 @@ If no cache exists, dobeypilot explores the app live via `list_menus`, `list_but
 
 ## Component 5 — Session Persistence
 
-**File:** `~/.dobey/save_session.py`
+**File:** `~/Desktop/Koshai/infra/save_session.py`
 
 At end of session (or when stuck), saves:
 ```

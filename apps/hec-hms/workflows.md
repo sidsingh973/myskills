@@ -16,7 +16,7 @@ app.activate()
 time.sleep(0.3)
 
 # 1. File > New
-python3 ~/.dobey/axcontrol.py menu "HEC-HMS-4.13" "File" "New"
+python3 ~/Desktop/Koshai/infra/axcontrol.py menu "HEC-HMS-4.13" "File" "New"
 time.sleep(1.5)
 
 # 2. Dialog appears: "Create a New Project"
@@ -74,7 +74,7 @@ Verified: 2026-05-07
 
 ```bash
 # Open manager
-python3 ~/.dobey/axcontrol.py menu "HEC-HMS-4.13" "Components" "Basin Model Manager"
+python3 ~/Desktop/Koshai/infra/axcontrol.py menu "HEC-HMS-4.13" "Components" "Basin Model Manager"
 ```
 
 ```python
